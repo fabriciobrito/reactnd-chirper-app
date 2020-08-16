@@ -1,13 +1,16 @@
-import { saveLikeToggle } from '../utils/api';
+import { saveLikeToggle, saveTweet } from '../utils/api';
+import { showLoading, hideLoading } from 'react-redux-loading';
+import { TiLocationArrowOutline } from 'react-icons/ti';
 export const RECEIVE_TWEETS = 'RECEIVE_TWEETS';
 export const TOGGLE_TWEET = 'TOGGLE_TWEET';
+export const ADD_TWEET = 'ADD_TWEET';
 
 /**
- * Action creator function for storing the tweets
+ * Action creator function for adding tweets to the store
  *
  * @export
  * @param {*} tweets - Tweets from the database
- * @returns Receive Tweets Action for the Reducer
+ * @returns Receive Tweets Action Obj for the Reducer
  */
 export function receiveTweets(tweets) {
   return {
@@ -17,13 +20,48 @@ export function receiveTweets(tweets) {
 }
 
 /**
- * Action creator function for storing the tweet likes
+ * Action creator function to add a tweet to the store
+ *
+ * @param {*} tweet Tweet from the user form
+ * @returns Save Tweet Action Obj for the Reducer
+ */
+function addTweet(tweet) {
+  return {
+    type: ADD_TWEET,
+    tweet
+  }
+}
+
+/**
+ * Thunk function to add tweet to the database async
  *
  * @export
+ * @param {*} text The tweet text
+ * @param {*} replyingTo The tweet ID it is replying to (if any)
+ * @returns The function that updates de database to the new tweet
+ */
+export function handleAddTweet(text, replyingTo) {
+  return (dispatch, getState) => {
+    const { authedUser } = getState();
+    dispatch(showLoading());
+    return saveTweet({
+      text,
+      author: authedUser,
+      replyingTo
+    })
+      .then((tweet) => dispatch(addTweet(tweet)))
+      .then(dispatch(hideLoading()));
+  }
+}
+
+/**
+ * Action creator function for storing the tweet likes
+ * This is not exported because of the handleToggleTweet Thunk function
+ *
  * @param {*} { id, authedUser, hasLiked} object with tweet info
  * @returns Toggle Tweet Action for the Reducer
  */
-export function toggleTweet({ id, authedUser, hasLiked}) {
+function toggleTweet({ id, authedUser, hasLiked}) {
   return {
     type: TOGGLE_TWEET,
     id,
@@ -32,6 +70,13 @@ export function toggleTweet({ id, authedUser, hasLiked}) {
   }
 }
 
+/**
+ * Thunk function to toggle tweet like async
+ *
+ * @export
+ * @param {*} info Object with id, authedUser and hasLiked props
+ * @returns The function that updated the dabase
+ */
 export function handleToggleTweet(info) {
   return (dispatch) => {
     // Optimistic update, so change state locally and then reflects in db

@@ -1,13 +1,15 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { handleAddTweet } from '../actions/tweets';
+import { Redirect } from 'react-router-dom';
 
 class NewTweet extends Component {
   // This is a Controlled state to manage the Submit Button enabling
   // It is used only within this Component
   // So it does not need to be in Redux Store
   state = {
-    text: ''
+    text: '',
+    toHome: false
   };
   handleChangeText = (e) => {
     const text = e.target.value;
@@ -19,12 +21,17 @@ class NewTweet extends Component {
     // The ID property is the ReplyingTo Tweet ID, if any
     const { dispatch, id } = this.props;
     dispatch(handleAddTweet(text, id));
-    this.setState(() => ({text: ''}));
+    this.setState(() => ({
+      text: '',
+      toHome: id ? false : true // If replying, stays in TweetPage
+    }));
   }
   render() {
-    const { text } = this.state;
+    const { text, toHome } = this.state;
     const tweetCharactersLeft = 280 - text.length;
-    {/* ToDo: Redirect to home when submitted */}
+    if(toHome){
+      return <Redirect to='/' />
+    }
     return(
       <div>
         <h3 className='center'>
